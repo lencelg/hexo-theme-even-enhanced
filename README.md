@@ -1,6 +1,16 @@
 ## Introduction
 this is a heavy modification of [ahonn/hexo-theme-even](https://github.com/ahonn/hexo-theme-even)
 
+major difference
+- dark/light theme toggle
+- other small changes
+
+## demo
+
+![](./demo/demo.png)
+
+you can also go to [my blog](https://lencelg.github.io/) for a preview
+
 ## Installation
 use `git`
 
