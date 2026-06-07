@@ -1,0 +1,13 @@
+// ==============================
+// Post footer
+// =============================
+
+@use 'sass:meta';
+@use '../variables' as *;
+
+.footer {
+  margin-top: $footer-margin-top;
+
+  @include meta.load-css('_footer/social');
+  @include meta.load-css('_footer/copyright');
+}

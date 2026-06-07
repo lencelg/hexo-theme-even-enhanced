@@ -1,0 +1,21 @@
+// ==============================
+// Social
+// =============================
+
+@use '../../variables' as *;
+
+.social-links {
+  text-align: center;
+
+  .iconfont {
+    font-size: $social-icon-font-size;
+
+    & + .iconfont {
+      margin-left: $social-link-margin-left;
+    } 
+
+    &:hover {
+      color: var(--theme-color);
+    }
+  }
+}

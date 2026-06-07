@@ -1,0 +1,148 @@
+@use 'sass:color';
+@use 'sass:map';
+@use 'sass:math';
+@use '../../variables' as *;
+
+// =================== Code Blocks & Inline Code ===================
+
+// Language label tag list
+$code-type-list: () !default;
+
+pre {
+  padding: 1em 1.2em;
+  font-size: $code-font-size;
+  font-family: $code-font-family;
+  line-height: 1.6;
+}
+
+// Fenced code block container
+.highlight {
+  margin: 1.5em 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  position: relative;
+  border: 1px solid var(--border-color);
+
+  // Language label
+  &::before {
+    display: block;
+    padding: 6px 16px;
+    font-size: 0.78em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--meta-color);
+    background: var(--code-background);
+    border-bottom: 1px solid var(--border-color);
+    content: attr(data-lang) ' Code';
+  }
+
+  table {
+    position: relative;
+    max-width: none;
+    margin: 0;
+    width: 100%;
+  }
+
+  // Per-language label override
+  @each $sign, $text in $code-type-list {
+    &.#{$sign}::before {
+      content: $text;
+    }
+  }
+
+  // With figcaption (from highlight.js caption)
+  figcaption {
+    display: none;
+  }
+
+  .code {
+    pre {
+      margin: 0;
+      padding: 1em 1.2em;
+      background: transparent !important;
+    }
+  }
+
+  .gutter {
+    width: 1%;
+    min-width: 40px;
+    color: var(--border-color-alt);
+    user-select: none;
+    vertical-align: top;
+
+    pre {
+      margin: 0;
+      padding: 1em 0.5em 1em 1em;
+      text-align: right;
+      background: transparent !important;
+    }
+  }
+
+  .line {
+    height: math.round(math.div($code-font-size * 1.6, 1px)) * 1px;
+  }
+
+  table, tr, td {
+    margin: 0;
+    padding: 0;
+    border-collapse: collapse;
+  }
+
+  // Syntax highlight colors
+  .code {
+    .comment,
+    .quote {
+      color: var(--highlight-comment);
+    }
+
+    .keyword,
+    .selector-tag,
+    .addition {
+      color: var(--highlight-keyword);
+    }
+
+    .number,
+    .string,
+    .meta .meta-string,
+    .literal,
+    .doctag,
+    .regexp {
+      color: var(--highlight-number);
+    }
+
+    .title,
+    .section,
+    .name,
+    .selector-id,
+    .selector-class {
+      color: var(--highlight-title);
+    }
+
+    .attribute,
+    .attr,
+    .variable,
+    .template-variable,
+    .class .title,
+    .type {
+      color: var(--highlight-attribute);
+    }
+
+    .symbol,
+    .bullet,
+    .subst,
+    .meta,
+    .meta .keyword,
+    .selector-attr,
+    .selector-pseudo,
+    .link {
+      color: var(--highlight-symbol);
+    }
+
+    .built_in,
+    .deletion {
+      color: var(--highlight-builtin);
+    }
+  }
+}

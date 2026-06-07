@@ -1,0 +1,60 @@
+@use '../../variables' as *;
+@use '../../_common/animation' as *;
+
+.post-header {
+  margin-bottom: 20px;
+
+  .post-title {
+    margin: 0;
+    font-size: $post-title-font-size;
+    font-weight: $post-title-font-weight;
+    font-family: $global-serif-font-family;
+  }
+
+  .post-link {
+    @include underline-from-center;
+  }
+
+  .post-meta {
+    .post-time {
+      font-size: 15px;
+      color: var(--meta-color);
+    }
+
+    .post-category {
+      display: inline;
+      font-size: 14px;
+      color: var(--meta-color);
+
+      &::before {
+        content: '·';
+      }
+
+      a {
+        color: inherit;
+
+        & + a {
+          &::before {
+            content: '/';
+            margin-right: 3px;
+            color: var(--meta-color) !important;
+          }
+        }
+
+        &:hover {
+          color: var(--theme-color);
+        }
+      }
+    }
+
+    .post-visits {
+      display: inline-block;
+      font-size: 14px;
+      color: var(--meta-color);
+
+      &::before {
+        content: '·';
+      }
+    }
+  }
+}

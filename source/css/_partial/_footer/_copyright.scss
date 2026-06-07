@@ -1,0 +1,25 @@
+// ==============================
+// Copyright
+// =============================
+
+@use '../../variables' as *;
+
+.copyright {
+  margin: $copyright-margin;
+  color: var(--meta-color);
+  text-align: center;
+  font-family: $global-serif-font-family;
+
+  .hexo-link,
+  .theme-link {
+    color: var(--theme-color);
+  }
+
+  .copyright-year {
+    display: block;
+
+    .heart {
+      font-size: 14px;
+    }
+  }
+}

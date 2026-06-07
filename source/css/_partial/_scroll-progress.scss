@@ -1,0 +1,16 @@
+// ==============================
+// Top Reading Progress Bar
+// ==============================
+
+.scrollPercentage {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: var(--theme-color);
+  z-index: 9999;
+  transition: width 0.1s ease-out;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  border-radius: 0 2px 2px 0;
+}

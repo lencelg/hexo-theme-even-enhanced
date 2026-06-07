@@ -1,0 +1,25 @@
+// ==============================
+// Header
+// ==============================
+
+@use 'sass:meta';
+@use '../variables' as *;
+@use '../_common/utils' as *;
+
+.header {
+  @include clearfix;
+  padding: $header-padding;
+
+  @include meta.load-css('_header/logo');
+  @include meta.load-css('_header/menu');
+}
+
+
+@include max-screen() {
+  .header {
+    padding: 50px 0 0;
+    text-align: center;
+  }
+}
+
+// (Headroom-style pinning removed — not used)

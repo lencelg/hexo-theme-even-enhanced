@@ -1,0 +1,18 @@
+@use '../../variables' as *;
+
+.post-copyright {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-color);
+
+  .copyright-item {
+    margin: 5px 0;
+    word-break: normal;
+    white-space: pre-warp;
+    word-wrap: break-word;
+
+    a {
+      color: var(--theme-color);
+    }
+  }
+}

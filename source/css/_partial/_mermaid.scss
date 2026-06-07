@@ -1,0 +1,30 @@
+// ==============================
+// Mermaid Diagram Styles
+// Markdown Preview Enhanced support
+// ==============================
+
+.mermaid {
+  text-align: center;
+  margin: 1.5em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+// Fix mermaid dark theme
+[data-theme="dark"] {
+  .mermaid {
+    svg {
+      filter: invert(0.9) hue-rotate(180deg);
+
+      // Keep text readable after invert
+      text {
+        fill: #333 !important;
+      }
+    }
+  }
+}

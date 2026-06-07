@@ -1,0 +1,50 @@
+@use '../../variables' as *;
+
+.post-reward {
+  margin-top: 20px;
+  padding-top: 10px;
+  text-align: center;
+  border-top: 1px dashed var(--border-color);
+
+  .reward-button {
+    margin: 15px 0;
+    padding: 3px 7px;
+    display: inline-block;
+    color: var(--theme-color);
+    border: 1px solid var(--theme-color);
+    border-radius: 5px;
+    cursor: pointer;
+
+    &:hover {
+      color: $white;
+      background-color: var(--theme-color);
+      transition: 0.5s;
+    }
+  }
+
+  #reward:checked {
+    & ~ .qr-code {
+      display: block;
+    }
+
+    & ~ .reward-button {
+      display: none;
+    }
+  }
+
+  .qr-code {
+    display: none;
+    margin-top: 15px;
+
+    .qr-code-image {
+      display: inline-block;
+      min-width: 200px;
+      width: 40%;
+    }
+
+    .image {
+      width: 200px;
+      height: 200px;
+    }
+  }
+}

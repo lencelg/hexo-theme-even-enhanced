@@ -1,0 +1,88 @@
+// ==============================
+// Theme CSS Custom Properties
+// Light (default) and Dracula dark theme
+// ==============================
+
+:root {
+  --theme-color: #FF69B4;
+  --bg-color: #fefefe;
+  --font-color: #34495e;
+  --meta-color: #8a8a8a;
+  --border-color: #e6e6e6;
+  --border-color-alt: #cacaca;
+  --deputy-color: #f8f5f5;
+  --code-color: #c7254e;
+  --code-background: #f8f5f5;
+
+  --post-toc-background: rgba(248, 245, 245, 0.6);
+  --blockquote-background: rgba(255, 105, 180, 0.05);
+  --blockquote-border-left: 3px solid rgba(255, 105, 180, 0.3);
+  --blockquote-color: rgba(52, 73, 94, 0.8);
+  --box-shadow-color: rgba(0, 0, 0, 0.125);
+  --content-table-border-color: #ece9e9;
+  --code-caption-color: #a7a7a7;
+  --code-caption-background: #ededed;
+  --archive-hover-time-color: #6d6d6d;
+  --archive-hover-link-color: #d94d85;
+  --mobile-menu-background: rgba(248, 245, 245, 0.5);
+  --selection-color: #ffffff;
+  --theme-color-meta: #f8f5f5;
+
+  // Code syntax highlight (solarized light)
+  --highlight-comment: #93a1a1;
+  --highlight-keyword: #859900;
+  --highlight-number: #2aa198;
+  --highlight-title: #268bd2;
+  --highlight-attribute: #b58900;
+  --highlight-symbol: #cb4b16;
+  --highlight-builtin: #dc322f;
+}
+
+[data-theme="dark"] {
+  // ── Dracula palette ──
+  --dracula-bg:       #282a36;
+  --dracula-current:  #44475a;
+  --dracula-fg:       #f8f8f2;
+  --dracula-comment:  #6272a4;
+  --dracula-cyan:     #8be9fd;
+  --dracula-green:    #50fa7b;
+  --dracula-orange:   #ffb86c;
+  --dracula-pink:     #ff79c6;
+  --dracula-purple:   #bd93f9;
+  --dracula-red:      #ff5555;
+  --dracula-yellow:   #f1fa8c;
+
+  // Mapped theme variables
+  --theme-color:           var(--dracula-pink);
+  --bg-color:              var(--dracula-bg);
+  --font-color:            var(--dracula-fg);
+  --meta-color:            var(--dracula-comment);
+  --border-color:          var(--dracula-current);
+  --border-color-alt:      #5a5a5a;
+  --deputy-color:          var(--dracula-current);
+  --code-color:            var(--dracula-pink);
+  --code-background:       var(--dracula-current);
+
+  --post-toc-background:        rgba(68, 71, 90, 0.7);
+  --blockquote-background:      rgba(255, 121, 198, 0.07);
+  --blockquote-border-left:     3px solid var(--dracula-pink);
+  --blockquote-color:           rgba(248, 248, 242, 0.75);
+  --box-shadow-color:           rgba(0, 0, 0, 0.4);
+  --content-table-border-color: var(--dracula-current);
+  --code-caption-color:         var(--dracula-comment);
+  --code-caption-background:    var(--dracula-current);
+  --archive-hover-time-color:   var(--dracula-comment);
+  --archive-hover-link-color:   var(--dracula-pink);
+  --mobile-menu-background:     rgba(68, 71, 90, 0.5);
+  --selection-color:            var(--dracula-bg);
+  --theme-color-meta:           var(--dracula-current);
+
+  // Code syntax highlight (Dracula inspired)
+  --highlight-comment:  var(--dracula-comment);
+  --highlight-keyword:  var(--dracula-pink);
+  --highlight-number:   var(--dracula-purple);
+  --highlight-title:    var(--dracula-cyan);
+  --highlight-attribute: var(--dracula-yellow);
+  --highlight-symbol:   var(--dracula-orange);
+  --highlight-builtin:  var(--dracula-green);
+}

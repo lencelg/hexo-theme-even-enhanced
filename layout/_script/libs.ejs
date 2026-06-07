@@ -1,0 +1,31 @@
+<% if (theme.fancybox) { %>
+<% var fancybox_js = 'fancybox/jquery.fancybox.pack.js' %>
+<% } %>
+
+<%
+var js_libs = {
+jquery: 'jquery/jquery.min.js',
+slideout: 'slideout/slideout.js',
+fancybox: fancybox_js,
+}
+%>
+
+<% for (var lib in js_libs) { %>
+<% if (lib) { %>
+<script type="text/javascript" src="<%- url_for('lib') %>/<%- js_libs[lib] %>"></script>
+<% } %>
+<% } %>
+
+<!-- Mermaid diagram support -->
+<% if (theme.mermaid && theme.mermaid.enable) { %>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: '<%= theme.mermaid.theme || "default" %>',
+    flowchart: { useMaxWidth: true, htmlLabels: true },
+    sequence: { useMaxWidth: true },
+    gantt: { useMaxWidth: true }
+  });
+</script>
+<% } %>

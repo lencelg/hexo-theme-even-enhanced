@@ -1,0 +1,61 @@
+<!-- Website mata -->
+<%- partial ("./_head/meta.ejs") %>
+
+<!-- Website rss -->
+<% if (theme.rss === 'default' && config.feed && config.feed.path) { %>
+<%- feed_tag(config.feed.path) %>
+<% } else if (theme.rss) { %>
+<%- feed_tag(theme.rss) %>
+<% } else { %>
+<%- feed_tag('atom.xml') %>
+<% } %>
+
+<!-- Website favicon -->
+<% if (theme.favicon) { %>
+<link rel="shortcut icon" type="image/x-icon" href="<%- url_for(theme.favicon) %>?v=<%- theme.version %>" />
+<% } %>
+
+<!-- Canonical, good for google search engine -->
+<link rel="canonical" href="<%- config.url %>/<%- page.canonical_path.replace('index.html', '') %>" />
+
+<!-- Fancybox styling -->
+<% if (theme.fancybox) { %>
+<link rel="stylesheet" type="text/css" href="<%- url_for('lib/fancybox/jquery.fancybox.css') %>" />
+<% } %>
+
+<!-- KaTeX support (used by Markdown Preview Enhanced) -->
+<% if (theme.latex && theme.katex && theme.katex.enable) { %>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+<% if (theme.katex.autoRender) { %>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+  onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true},{left: '$', right: '$', display: false},{left: '\\[', right: '\\]', display: true}]});"></script>
+<% } %>
+<% } else if (theme.latex) { %>
+<!-- MathJax (LaTeX) support -->
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({ tex2jax: { inlineMath: [['$','$'], ['\\(','\\)']] } });  
+  </script>
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+<% } %>
+
+<!-- Mermaid diagram support (used by Markdown Preview Enhanced) -->
+<% if (theme.mermaid && theme.mermaid.enable) { %>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.css" />
+<% } %>
+
+<!-- Theme styling -->
+<link rel="stylesheet" type="text/css" href="<%- url_for('css/style.css') %>?v=<%- theme.version %>" />
+
+<!-- Analytics and push -->
+<% if (!env.debug) { %>
+<%- partial ("../_script/analytics.ejs") %>
+<%- partial ("../_script/push.ejs") %>
+<% } %>
+
+<!-- LeanCloud Counter -->
+<%- partial ("../_script/counter.ejs") %>
+<% var themeConfig = { leancloud: theme.leancloud, toc: theme.toc, fancybox: theme.fancybox, latex: theme.latex, katex: theme.katex, mermaid: theme.mermaid }; %>
+<script>
+  window.config = <%- JSON.stringify(themeConfig) %>;
+</script>
