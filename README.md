@@ -1,25 +1,14 @@
-# hexo-theme-even
-A super simple theme for Hexo
-
-<a href="https://www.buymeacoffee.com/yuexunjiang"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=yuexunjiang&button_colour=FFDD00&font_colour=000000&font_family=Comic&outline_colour=000000&coffee_colour=ffffff" /></a>
-
-[![GitHub stars](https://img.shields.io/github/stars/ahonn/hexo-theme-even.svg?style=flat-square)](https://github.com/ahonn/hexo-theme-even/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/ahonn/hexo-theme-even.svg?style=flat-square)](https://github.com/ahonn/hexo-theme-even/network)
-[![GitHub issues](https://img.shields.io/github/issues/ahonn/hexo-theme-even.svg?style=flat-square)](https://github.com/ahonn/hexo-theme-even/issues)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/ahonn/hexo-theme-even/master/LICENSE)
-
-## Screenshots
-![even-screenshots](https://ahonn-me.oss-cn-beijing.aliyuncs.com/images/55iw9.png)
-
-[🔯 Live Preview](https://ahonn.github.io/hexo-theme-even/)
+## Introduction
+this is a heavy modification of [ahonn/hexo-theme-even](https://github.com/ahonn/hexo-theme-even)
 
 ## Installation
-```bash
-$ npm install hexo-renderer-ejs hexo-renderer-dartsass --save
-$ git clone https://github.com/ahonn/hexo-theme-even themes/even
-$ cp themes/even/_config.yml.example themes/even/_config.yml
+use `git`
+
+```console
+$ git clone https://github.com/lencelg/hexo-theme-even-enhanced.git themes/even
 ```
 
+## Usage
 Modify `yoursite/_config.yml`:
 
 ```yaml
@@ -29,8 +18,6 @@ Modify `yoursite/_config.yml`:
 theme: even
 ```
 
-For more options, check out the [document](https://github.com/ahonn/hexo-theme-even/wiki)
-
 ## Update
 You can update to latest master branch by the following command:
 
@@ -38,11 +25,3 @@ You can update to latest master branch by the following command:
 $ cd themes/even
 $ git pull
 ```
-
-## Contributing
-Contribution is welcome, feel free to open an issue or pull request.
-
-## Contributors
-
-This project exists thanks to all the people who contribute.
-<a href="https://github.com/ahonn/hexo-theme-even/graphs/contributors"><img src="https://opencollective.com/hexo-theme-even/contributors.svg?width=890&button=false" /></a>
