@@ -26,6 +26,7 @@
     }
     this.gfmAlerts();
     this.fixLists();
+    this.fixUnorderedLists();
     this.copyCode();
     this.scrollProgress();
     this.backToTop();
@@ -474,6 +475,72 @@
         listHtml += '<li>' + items[j] + '</li>\n';
       }
       listHtml += '</ol>';
+
+      $p.replaceWith(listHtml);
+    });
+  }
+
+  // Fix unordered lists: convert paragraphs with " - " separated items into proper <ul>
+  // Pattern: "prefix - item1 - item2 - item3"
+  // Prefix (before first " - ") becomes a <p>, the rest become <li> items
+  Even.prototype.fixUnorderedLists = function () {
+    $('.post-content p').each(function () {
+      var $p = $(this);
+      var html = $p.html();
+
+      // Skip if already inside a list or contains block-level elements
+      if ($p.parents('li, ol, ul').length) return;
+      if ($p.find('img, table, blockquote, pre, h1, h2, h3, h4, h5, h6').length) return;
+
+      // Match items separated by " - " (space-hyphen-space)
+      // The pattern requires at least 2 such separators (3+ items) to qualify as a list
+      var separator = ' - ';
+      var parts = [];
+      var searchStart = 0;
+
+      // Find all " - " occurrences
+      while (searchStart < html.length) {
+        var sepIdx = html.indexOf(separator, searchStart);
+        if (sepIdx === -1) break;
+        // Make sure it's not inside an HTML tag or entity
+        var beforeSep = html.substring(0, sepIdx);
+        if (beforeSep.lastIndexOf('>') > beforeSep.lastIndexOf('<')) {
+          searchStart = sepIdx + 1;
+          continue;
+        }
+        parts.push(sepIdx);
+        searchStart = sepIdx + separator.length;
+      }
+
+      // Need at least 2 separators (3 items) to form a list
+      if (parts.length < 2) return;
+
+      // Extract items
+      var items = [];
+      var cursor = 0;
+      for (var i = 0; i < parts.length; i++) {
+        var item = html.substring(cursor, parts[i]).trim();
+        if (item) items.push(item);
+        cursor = parts[i] + separator.length;
+      }
+      var lastItem = html.substring(cursor).trim();
+      if (lastItem) items.push(lastItem);
+
+      if (items.length < 3) return;
+
+      // First item is the leading text, rest are list items
+      var leadingText = items[0];
+      var listItems = items.slice(1);
+
+      var listHtml = '';
+      if (leadingText) {
+        listHtml += '<p>' + leadingText + '</p>\n';
+      }
+      listHtml += '<ul>\n';
+      for (var j = 0; j < listItems.length; j++) {
+        listHtml += '<li>' + listItems[j] + '</li>\n';
+      }
+      listHtml += '</ul>';
 
       $p.replaceWith(listHtml);
     });
