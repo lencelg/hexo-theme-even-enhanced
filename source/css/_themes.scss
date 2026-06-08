@@ -3,30 +3,32 @@
 // Light (default) and Dracula dark theme
 // ==============================
 
+@use 'variables' as *;
+
 :root {
-  --theme-color: #FF69B4;
+  --theme-color: #{$theme-color};
   --bg-color: #fefefe;
-  --font-color: #34495e;
+  --font-color: #{$global-font-color};
   --meta-color: #8a8a8a;
   --border-color: #e6e6e6;
   --border-color-alt: #cacaca;
-  --deputy-color: #f8f5f5;
+  --deputy-color: #{$deputy-color};
   --code-color: #c7254e;
-  --code-background: #f8f5f5;
+  --code-background: #{$deputy-color};
 
-  --post-toc-background: rgba(248, 245, 245, 0.6);
-  --blockquote-background: rgba(255, 105, 180, 0.05);
-  --blockquote-border-left: 3px solid rgba(255, 105, 180, 0.3);
+  --post-toc-background: #{rgba($deputy-color, 0.6)};
+  --blockquote-background: #{rgba($theme-color, 0.05)};
+  --blockquote-border-left: 3px solid #{rgba($theme-color, 0.3)};
   --blockquote-color: rgba(52, 73, 94, 0.8);
   --box-shadow-color: rgba(0, 0, 0, 0.125);
-  --content-table-border-color: #ece9e9;
+  --content-table-border-color: #{color.adjust($deputy-color, $lightness: -3%)};
   --code-caption-color: #a7a7a7;
   --code-caption-background: #ededed;
   --archive-hover-time-color: #6d6d6d;
   --archive-hover-link-color: #d94d85;
-  --mobile-menu-background: rgba(248, 245, 245, 0.5);
+  --mobile-menu-background: #{rgba($deputy-color, 0.5)};
   --selection-color: #ffffff;
-  --theme-color-meta: #f8f5f5;
+  --theme-color-meta: #{$deputy-color};
 
   // Code syntax highlight (solarized light)
   --highlight-comment: #93a1a1;
