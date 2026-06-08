@@ -42,50 +42,43 @@
 }
 
 [data-theme="dark"] {
-  // ── Dracula palette ──
-  --dracula-bg:       #282a36;
-  --dracula-current:  #44475a;
-  --dracula-fg:       #f8f8f2;
-  --dracula-comment:  #6272a4;
-  --dracula-cyan:     #8be9fd;
-  --dracula-green:    #50fa7b;
-  --dracula-orange:   #ffb86c;
-  --dracula-pink:     #ff79c6;
-  --dracula-purple:   #bd93f9;
-  --dracula-red:      #ff5555;
-  --dracula-yellow:   #f1fa8c;
+  // ── Dark background palette ──
+  --dark-bg:       #282a36;
+  --dark-current:  #44475a;
+  --dark-fg:       #f8f8f2;
+  --dark-comment:  #6272a4;
 
-  // Mapped theme variables
-  --theme-color:           var(--dracula-pink);
-  --bg-color:              var(--dracula-bg);
-  --font-color:            var(--dracula-fg);
-  --meta-color:            var(--dracula-comment);
-  --border-color:          var(--dracula-current);
+  // Mapped theme variables (use configured $theme-color for accent)
+  --theme-color:           #{$theme-color};
+  --bg-color:              var(--dark-bg);
+  --font-color:            var(--dark-fg);
+  --meta-color:            var(--dark-comment);
+  --border-color:          var(--dark-current);
   --border-color-alt:      #5a5a5a;
-  --deputy-color:          var(--dracula-current);
-  --code-color:            var(--dracula-pink);
-  --code-background:       var(--dracula-current);
+  --deputy-color:          var(--dark-current);
+  --code-color:            #{$theme-color};
+  --code-background:       var(--dark-current);
 
   --post-toc-background:        rgba(68, 71, 90, 0.7);
-  --blockquote-background:      rgba(255, 121, 198, 0.07);
-  --blockquote-border-left:     3px solid var(--dracula-pink);
+  --blockquote-background:      #{rgba($theme-color, 0.07)};
+  --blockquote-border-left:     3px solid #{$theme-color};
   --blockquote-color:           rgba(248, 248, 242, 0.75);
   --box-shadow-color:           rgba(0, 0, 0, 0.4);
-  --content-table-border-color: var(--dracula-current);
-  --code-caption-color:         var(--dracula-comment);
-  --code-caption-background:    var(--dracula-current);
-  --archive-hover-time-color:   var(--dracula-comment);
-  --archive-hover-link-color:   var(--dracula-pink);
+  --content-table-border-color: var(--dark-current);
+  --code-caption-color:         var(--dark-comment);
+  --code-caption-background:    var(--dark-current);
+  --archive-hover-time-color:   var(--dark-comment);
+  --archive-hover-link-color:   #{$theme-color};
   --mobile-menu-background:     rgba(68, 71, 90, 0.5);
-  --selection-color:            var(--dracula-bg);
-  --theme-color-meta:           var(--dracula-current);
+  --selection-color:            var(--dark-bg);
+  --theme-color-meta:           var(--dark-current);
 
-  // Code syntax highlight (Dracula inspired)
-  --highlight-comment:  var(--dracula-comment);
-  --highlight-keyword:  var(--dracula-pink);
-  --highlight-number:   var(--dracula-purple);
-  --highlight-title:    var(--dracula-cyan);
-  --highlight-attribute: var(--dracula-yellow);
-  --highlight-symbol:   var(--dracula-orange);
-  --highlight-builtin:  var(--dracula-green);
+  // Code syntax highlight (inspired by configured theme color)
+  --highlight-comment:  var(--dark-comment);
+  --highlight-keyword:  #{$theme-color};
+  --highlight-number:   #bd93f9;
+  --highlight-title:    #8be9fd;
+  --highlight-attribute: #f1fa8c;
+  --highlight-symbol:   #ffb86c;
+  --highlight-builtin:  #50fa7b;
 }
