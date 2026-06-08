@@ -47,6 +47,16 @@
       }
     }
 
+    .post-reading-time {
+      display: inline-block;
+      font-size: 14px;
+      color: var(--meta-color);
+
+      &::before {
+        content: '·';
+      }
+    }
+
     .post-visits {
       display: inline-block;
       font-size: 14px;

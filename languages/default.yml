@@ -18,6 +18,7 @@ posts:
   readmore: Read more..
   visits: Visits
   reward: 'Reward'
+  readingtime: '%d min read'
 
 copyright:
   author: 'Author'

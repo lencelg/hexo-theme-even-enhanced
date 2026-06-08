@@ -24,6 +24,11 @@
         <% }); %>
       </span>
       <% } %>
+      <% if (theme.reading_time && theme.reading_time.enable) { %>
+      <span class="post-reading-time">
+        <%- __('posts.readingtime', Math.max(1, Math.round((post.content.replace(/<[^>]+>/g, '').replace(/\s+/g, '').length) / (theme.reading_time.words_per_minute || 300)))) %>
+      </span>
+      <% } %>
       <% if (theme.leancloud && theme.leancloud.app_id && theme.leancloud.app_key) { %>
       <span class="post-visits" data-url="<%= url_for(post.path) %>" data-title="<%= post.title %>">
         <%= __('posts.visits') %> 0

@@ -56,6 +56,12 @@ katex:
   # Auto render options
   autoRender: true
 
+# Reading time estimation
+reading_time:
+  enable: true
+  # Words per minute (Chinese: ~300, English: ~200)
+  words_per_minute: 300
+
 # Mermaid diagram support
 # Markdown Preview Enhanced uses Mermaid for flowchart, sequence diagram, etc.
 mermaid:
