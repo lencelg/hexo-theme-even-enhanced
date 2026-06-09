@@ -40,7 +40,7 @@ toc: true
 excerpt:
   enable: true
   # Max length of auto-generated excerpt (in characters)
-  length: 300
+  length: 150
 
 # jQuery fancybox
 fancybox: true
