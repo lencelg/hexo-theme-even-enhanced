@@ -24,9 +24,9 @@
     if(this.config.latex) {
       this.renderLaTeX();
     }
+    this.renderMarkdown();
     this.gfmAlerts();
     this.fixLists();
-    this.fixUnorderedLists();
     this.copyCode();
     this.scrollProgress();
     this.backToTop();
@@ -480,158 +480,189 @@
     });
   }
 
-  // Fix unordered lists: convert paragraphs with list-like patterns into proper <ul>
-  // Patterns:
-  //   " - item1 - item2 - item3"  (inline hyphens)
-  //   "- item1 - item2 - item3"   (starts with hyphen)
-  //   "* item1 * item2 * item3"   (asterisk markers)
-  //   "• item1 • item2 • item3"   (bullet markers)
-  Even.prototype.fixUnorderedLists = function () {
+  // Comprehensive Markdown rendering for post content
+  // Handles cases where Hexo's markdown renderer didn't process the content
+  // Supports: headings, bold, italic, inline code, links, images, ordered/unordered lists
+  Even.prototype.renderMarkdown = function () {
     var self = this;
-    $('.post-content p').each(function () {
-      var $p = $(this);
-      var html = $p.html();
+    var $content = $('.post-content');
 
-      // Skip if already inside a list or contains block-level elements
-      if ($p.parents('li, ol, ul').length) return;
-      if ($p.find('img, table, blockquote, pre, h1, h2, h3, h4, h5, h6, ul, ol').length) return;
+    // Get the raw HTML content
+    var html = $content.html();
 
-      // --- Step 1: detect the list marker ---
-      var markerRegex = /(?:^|[\s>;、，])[\-*•·‣⁃]\s/;
-      var matches = html.match(new RegExp(markerRegex.source, 'g'));
-      if (!matches || matches.length < 2) return;
+    // Check if there are any unprocessed markdown patterns
+    // Look for literal markdown syntax that hasn't been converted to HTML
+    var hasMarkdown = false;
+    hasMarkdown = hasMarkdown || /\*{2}[^*]+\*{2}/.test(html);  // **bold**
+    hasMarkdown = hasMarkdown || /`[^`<]+`/.test(html);          // `code`
+    hasMarkdown = hasMarkdown || /^[-*]\s+/m.test(html);         // - list item
+    hasMarkdown = hasMarkdown || /^\d+[.、．]\s+/m.test(html);   // 1. list item
+    hasMarkdown = hasMarkdown || /^#{1,6}\s+/m.test(html);       // # heading
 
-      var marker = matches[0].trim();
-      var sepStr = ' ' + marker + ' ';
-      var firstChar = html.charAt(0);
-      var startsWithMarker = (firstChar === marker);
+    if (!hasMarkdown) return;
 
-      // --- Helper: check if position is inside an HTML tag ---
-      var isInsideHtmlTag = function (str, pos) {
-        var before = str.substring(0, pos);
-        var lastLt = before.lastIndexOf('<');
-        var lastGt = before.lastIndexOf('>');
-        // Inside a tag if last '<' is after last '>' (i.e., tag not yet closed)
-        return lastLt > lastGt;
-      };
+    // Process the entire content as markdown
+    // First, save any existing HTML wrappers (like blockquotes from Hexo)
+    // We'll process raw markdown text to HTML
+        
+    // Extract text content, preserving line breaks
+    var text = $content.text();
+    
+    // Process with our markdown parser
+    var processed = self._processMarkdown(text);
+    
+    // Replace content only if we got meaningful output
+    if (processed && processed.length > 10) {
+      $content.html(processed);
+    }
+  };
 
-      // --- Step 2: try to split by main separator ---
-      var parts = [];
-      var searchStart = 0;
-      while (searchStart < html.length) {
-        var sepIdx = html.indexOf(sepStr, searchStart);
-        if (sepIdx === -1) break;
-        if (isInsideHtmlTag(html, sepIdx)) {
-          searchStart = sepIdx + 1;
-          continue;
-        }
-        parts.push(sepIdx);
-        searchStart = sepIdx + sepStr.length;
+  // Process full markdown text (paragraphs, lists, inline)
+  Even.prototype._processMarkdown = function (text) {
+    var self = this;
+    var lines = text.split('\n');
+    var result = [];
+    var i = 0;
+
+    while (i < lines.length) {
+      var line = lines[i];
+      var trimmed = line.trim();
+
+      // Skip empty lines
+      if (!trimmed) {
+        i++;
+        continue;
       }
 
-      // Also try Unicode bullet as separator if no matches with space-hyphen-space
-      if (parts.length < 2) {
-        // Try other common markers
-        var altMarkers = ['\u2022', '\u00B7', '\u2023', '\u2043', '*'];
-        for (var mi = 0; mi < altMarkers.length; mi++) {
-          var altMarker = altMarkers[mi];
-          if (marker === altMarker) continue; // already tried
-          var altSep = ' ' + altMarker + ' ';
-          var altParts = [];
-          var altSearch = 0;
-          while (altSearch < html.length) {
-            var altIdx = html.indexOf(altSep, altSearch);
-            if (altIdx === -1) break;
-            if (isInsideHtmlTag(html, altIdx)) {
-              altSearch = altIdx + 1;
+      // Detect unordered list
+      if (trimmed.match(/^[-*]\s+(.*)/)) {
+        var items = [];
+        while (i < lines.length) {
+          var m = lines[i].trim().match(/^[-*]\s+(.*)/);
+          if (!m) {
+            // Allow next line without marker to be continuation (indented)
+            var nextTrimmed = lines[i].trim();
+            if (nextTrimmed && !nextTrimmed.match(/^[-*\d#]/) && items.length > 0) {
+              items[items.length - 1] += ' ' + self._processInlineMarkdown(nextTrimmed);
+              i++;
               continue;
             }
-            altParts.push(altIdx);
-            altSearch = altIdx + altSep.length;
-          }
-          if (altParts.length >= 2) {
-            marker = altMarker;
-            sepStr = altSep;
-            parts = altParts;
-            startsWithMarker = (firstChar === marker);
             break;
           }
+          items.push(self._processInlineMarkdown(m[1]));
+          i++;
         }
+        if (items.length > 0) {
+          result.push('<ul>\n<li>' + items.join('</li>\n<li>') + '</li>\n</ul>');
+        }
+        continue;
       }
 
-      // Try to detect if items start with marker at beginning of paragraph
-      // Pattern: "- item1 - item2 - item3" (no leading text)
-      if (parts.length < 2 && startsWithMarker) {
-        // The first marker is at position 0, split by " marker " from position marker.length+1
-        var altSep2 = ' ' + marker + ' ';
-        var altParts2 = [];
-        var altSearch2 = marker.length + 1; // skip past leading "marker "
-        while (altSearch2 < html.length) {
-          var altIdx2 = html.indexOf(altSep2, altSearch2);
-          if (altIdx2 === -1) break;
-          if (isInsideHtmlTag(html, altIdx2)) {
-            altSearch2 = altIdx2 + 1;
-            continue;
+      // Detect ordered list
+      if (trimmed.match(/^(\d+)[.、．]\s+(.*)/)) {
+        var olItems = [];
+        while (i < lines.length) {
+          var om = lines[i].trim().match(/^(\d+)[.、．]\s+(.*)/);
+          if (!om) {
+            var nextTrimmed2 = lines[i].trim();
+            if (nextTrimmed2 && !nextTrimmed2.match(/^[-*\d#]/) && olItems.length > 0) {
+              olItems[olItems.length - 1] += ' ' + self._processInlineMarkdown(nextTrimmed2);
+              i++;
+              continue;
+            }
+            break;
           }
-          altParts2.push(altIdx2);
-          altSearch2 = altIdx2 + altSep2.length;
+          olItems.push(self._processInlineMarkdown(om[2]));
+          i++;
         }
-        if (altParts2.length >= 2) {
-          sepStr = altSep2;
-          parts = altParts2;
+        if (olItems.length > 0) {
+          result.push('<ol>\n<li>' + olItems.join('</li>\n<li>') + '</li>\n</ol>');
         }
+        continue;
       }
 
-      if (parts.length < 2) return;
-
-      // --- Step 3: extract items ---
-      var items = [];
-      var cursor = 0;
-      if (startsWithMarker) {
-        cursor = marker.length + 1; // skip leading "marker "
+      // Detect heading
+      var headingMatch = trimmed.match(/^(#{1,6})\s+(.*)/);
+      if (headingMatch) {
+        var level = headingMatch[1].length;
+        result.push('<h' + level + '>' + self._processInlineMarkdown(headingMatch[2]) + '</h' + level + '>');
+        i++;
+        continue;
       }
-      for (var i = 0; i < parts.length; i++) {
-        var item = html.substring(cursor, parts[i]).trim();
-        if (item) items.push(item);
-        cursor = parts[i] + sepStr.length;
+
+      // Detect blockquote
+      var bqMatch = trimmed.match(/^>\s?(.*)/);
+      if (bqMatch) {
+        var bqLines = [];
+        while (i < lines.length) {
+          var bqm = lines[i].trim().match(/^>\s?(.*)/);
+          if (!bqm) break;
+          bqLines.push(bqm[1]);
+          i++;
+        }
+        var bqText = bqLines.join('\n');
+        // Recursively process blockquote content through markdown
+        var bqProcessed = self._processMarkdown(bqText);
+        result.push('<blockquote>\n' + bqProcessed + '\n</blockquote>');
+        continue;
       }
-      var lastItem = html.substring(cursor).trim();
-      if (lastItem) items.push(lastItem);
 
-      if (items.length < 2) return;
-
-      // --- Step 4: separate leading text from list items ---
-      var leadingText = null;
-      var listItems = items;
-
-      if (!startsWithMarker) {
-        leadingText = items[0];
-        listItems = items.slice(1);
-        if (listItems.length < 2) return;
+      // Regular paragraph
+      var paraLines = [];
+      while (i < lines.length) {
+        var nextLine = lines[i];
+        var nt = nextLine.trim();
+        if (!nt) break;
+        // Stop at list markers, headings, blockquotes
+        if (nt.match(/^[-*]\s/) && !paraLines.length) break;
+        if (nt.match(/^\d+[.、．]\s/) && !paraLines.length) break;
+        if (nt.match(/^#{1,6}\s/)) break;
+        if (nt.match(/^>/)) break;
+        paraLines.push(nextLine);
+        i++;
+      }
+      if (paraLines.length > 0) {
+        var paraText = paraLines.join(' ').trim();
+        if (paraText) {
+          result.push('<p>' + self._processInlineMarkdown(paraText) + '</p>');
+        }
       } else {
-        // Strip leading marker from first item if present
-        if (listItems.length > 0) {
-          var first = listItems[0];
-          if (first.charAt(0) === marker) {
-            listItems[0] = first.substring(1).trim();
-          }
-        }
+        i++;
       }
+    }
 
-      // --- Step 5: build replacement HTML ---
-      var listHtml = '';
-      if (leadingText) {
-        listHtml += '<p>' + leadingText + '</p>\n';
-      }
-      listHtml += '<ul>\n';
-      for (var j = 0; j < listItems.length; j++) {
-        listHtml += '<li>' + listItems[j] + '</li>\n';
-      }
-      listHtml += '</ul>';
+    return result.join('\n');
+  };
 
-      $p.replaceWith(listHtml);
-    });
-  }
+  // Process inline markdown: bold, italic, code, links, images
+  Even.prototype._processInlineMarkdown = function (text) {
+    if (!text) return '';
+
+    // Escape HTML entities first
+    text = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    // Inline code: `code` (must be done before bold/italic)
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // Bold: **text** or __text__
+    text = text.replace(/\*{2}([^*]+)\*{2}/g, '<strong>$1</strong>');
+    text = text.replace(/_{2}([^_]+)_{2}/g, '<strong>$1</strong>');
+
+    // Italic: *text* or _text_ (single, not inside words)
+    text = text.replace(/(\W|^)\*([^*]+)\*(\W|$)/g, '$1<em>$2</em>$3');
+    text = text.replace(/(\W|^)_([^_]+)_(\W|$)/g, '$1<em>$2</em>$3');
+
+    // Images: ![alt](url)
+    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
+
+    // Links: [text](url)
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+    return text;
+  };
 
   // Copy code button for code blocks
   Even.prototype.copyCode = function () {
