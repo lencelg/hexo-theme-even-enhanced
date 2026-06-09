@@ -480,44 +480,41 @@
     });
   }
 
-  // Comprehensive Markdown rendering for post content
-  // Handles cases where Hexo's markdown renderer didn't process the content
-  // Supports: headings, bold, italic, inline code, links, images, ordered/unordered lists
+  // Markdown rendering for post content
+  // Only runs when Hexo's renderer clearly did NOT process the content
+  // (i.e., content is raw text with markdown syntax visible)
   Even.prototype.renderMarkdown = function () {
     var self = this;
     var $content = $('.post-content');
+    if (!$content.length) return;
 
-    // Get the raw HTML content
     var html = $content.html();
+    if (!html) return;
 
-    // Check if there are any unprocessed markdown patterns
-    // Look for literal markdown syntax that hasn't been converted to HTML
+    // Count significant HTML elements — if there are many, the content
+    // was already rendered by Hexo's markdown engine, leave it alone.
+    var tagCount = (html.match(/<\/(p|ul|ol|li|h[1-6]|blockquote|pre|code|strong|em|a|img|table)\b/gi) || []).length;
+    if (tagCount >= 3) return;
+
+    // Check the TEXT content for visible markdown syntax
+    var text = $content.text();
     var hasMarkdown = false;
-    hasMarkdown = hasMarkdown || /\*{2}[^*]+\*{2}/.test(html);  // **bold**
-    hasMarkdown = hasMarkdown || /`[^`<]+`/.test(html);          // `code`
-    hasMarkdown = hasMarkdown || /^[-*]\s+/m.test(html);         // - list item
-    hasMarkdown = hasMarkdown || /^\d+[.、．]\s+/m.test(html);   // 1. list item
-    hasMarkdown = hasMarkdown || /^#{1,6}\s+/m.test(html);       // # heading
+    hasMarkdown = hasMarkdown || /\*{2}[^*]+\*{2}/.test(text);   // **bold**
+    hasMarkdown = hasMarkdown || /`[^`\n]+`/.test(text);          // `code`
+    hasMarkdown = hasMarkdown || /^[-*]\s/m.test(text);           // - list
+    hasMarkdown = hasMarkdown || /^\d+[.、．]\s/m.test(text);     // 1. list
+    hasMarkdown = hasMarkdown || /^#{1,6}\s/m.test(text);         // # heading
 
     if (!hasMarkdown) return;
 
-    // Process the entire content as markdown
-    // First, save any existing HTML wrappers (like blockquotes from Hexo)
-    // We'll process raw markdown text to HTML
-        
-    // Extract text content, preserving line breaks
-    var text = $content.text();
-    
-    // Process with our markdown parser
+    // Content is raw markdown — convert it to HTML
     var processed = self._processMarkdown(text);
-    
-    // Replace content only if we got meaningful output
     if (processed && processed.length > 10) {
       $content.html(processed);
     }
   };
 
-  // Process full markdown text (paragraphs, lists, inline)
+  // Process full markdown text to HTML
   Even.prototype._processMarkdown = function (text) {
     var self = this;
     var lines = text.split('\n');
@@ -528,24 +525,20 @@
       var line = lines[i];
       var trimmed = line.trim();
 
-      // Skip empty lines
-      if (!trimmed) {
-        i++;
-        continue;
-      }
+      // Skip completely empty lines
+      if (!trimmed) { i++; continue; }
 
-      // Detect unordered list
-      if (trimmed.match(/^[-*]\s+(.*)/)) {
+      // --- Unordered list ---
+      if (trimmed.match(/^[-*]\s/)) {
         var items = [];
         while (i < lines.length) {
           var m = lines[i].trim().match(/^[-*]\s+(.*)/);
           if (!m) {
-            // Allow next line without marker to be continuation (indented)
-            var nextTrimmed = lines[i].trim();
-            if (nextTrimmed && !nextTrimmed.match(/^[-*\d#]/) && items.length > 0) {
-              items[items.length - 1] += ' ' + self._processInlineMarkdown(nextTrimmed);
-              i++;
-              continue;
+            // Allow indented continuation line
+            var nt = lines[i].trim();
+            if (nt && !nt.match(/^[-*\d#>]/) && items.length > 0) {
+              items[items.length - 1] += ' ' + self._processInlineMarkdown(nt);
+              i++; continue;
             }
             break;
           }
@@ -558,17 +551,16 @@
         continue;
       }
 
-      // Detect ordered list
-      if (trimmed.match(/^(\d+)[.、．]\s+(.*)/)) {
+      // --- Ordered list ---
+      if (trimmed.match(/^\d+[.、．]\s/)) {
         var olItems = [];
         while (i < lines.length) {
           var om = lines[i].trim().match(/^(\d+)[.、．]\s+(.*)/);
           if (!om) {
-            var nextTrimmed2 = lines[i].trim();
-            if (nextTrimmed2 && !nextTrimmed2.match(/^[-*\d#]/) && olItems.length > 0) {
-              olItems[olItems.length - 1] += ' ' + self._processInlineMarkdown(nextTrimmed2);
-              i++;
-              continue;
+            var nt2 = lines[i].trim();
+            if (nt2 && !nt2.match(/^[-*\d#>]/) && olItems.length > 0) {
+              olItems[olItems.length - 1] += ' ' + self._processInlineMarkdown(nt2);
+              i++; continue;
             }
             break;
           }
@@ -581,16 +573,15 @@
         continue;
       }
 
-      // Detect heading
+      // --- Heading ---
       var headingMatch = trimmed.match(/^(#{1,6})\s+(.*)/);
       if (headingMatch) {
         var level = headingMatch[1].length;
         result.push('<h' + level + '>' + self._processInlineMarkdown(headingMatch[2]) + '</h' + level + '>');
-        i++;
-        continue;
+        i++; continue;
       }
 
-      // Detect blockquote
+      // --- Blockquote ---
       var bqMatch = trimmed.match(/^>\s?(.*)/);
       if (bqMatch) {
         var bqLines = [];
@@ -600,32 +591,26 @@
           bqLines.push(bqm[1]);
           i++;
         }
-        var bqText = bqLines.join('\n');
-        // Recursively process blockquote content through markdown
-        var bqProcessed = self._processMarkdown(bqText);
-        result.push('<blockquote>\n' + bqProcessed + '\n</blockquote>');
+        var bqHtml = self._processMarkdown(bqLines.join('\n'));
+        result.push('<blockquote>\n' + bqHtml + '\n</blockquote>');
         continue;
       }
 
-      // Regular paragraph
+      // --- Regular paragraph ---
       var paraLines = [];
       while (i < lines.length) {
-        var nextLine = lines[i];
-        var nt = nextLine.trim();
-        if (!nt) break;
-        // Stop at list markers, headings, blockquotes
-        if (nt.match(/^[-*]\s/) && !paraLines.length) break;
-        if (nt.match(/^\d+[.、．]\s/) && !paraLines.length) break;
-        if (nt.match(/^#{1,6}\s/)) break;
-        if (nt.match(/^>/)) break;
-        paraLines.push(nextLine);
+        var nl = lines[i];
+        var nt3 = nl.trim();
+        if (!nt3) break;
+        if (nt3.match(/^[-*]\s/)) break;
+        if (nt3.match(/^\d+[.、．]\s/)) break;
+        if (nt3.match(/^#{1,6}\s/)) break;
+        if (nt3.match(/^>\s?/)) break;
+        paraLines.push(nl);
         i++;
       }
       if (paraLines.length > 0) {
-        var paraText = paraLines.join(' ').trim();
-        if (paraText) {
-          result.push('<p>' + self._processInlineMarkdown(paraText) + '</p>');
-        }
+        result.push('<p>' + self._processInlineMarkdown(paraLines.join(' ').trim()) + '</p>');
       } else {
         i++;
       }
@@ -638,25 +623,22 @@
   Even.prototype._processInlineMarkdown = function (text) {
     if (!text) return '';
 
-    // Escape HTML entities first
-    text = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    // First, protect any existing HTML-like entities
+    // Then apply markdown rules
 
-    // Inline code: `code` (must be done before bold/italic)
+    // Inline code: `code` (process first, before bold/italic)
     text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
 
     // Bold: **text** or __text__
-    text = text.replace(/\*{2}([^*]+)\*{2}/g, '<strong>$1</strong>');
-    text = text.replace(/_{2}([^_]+)_{2}/g, '<strong>$1</strong>');
+    text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/__([^_]+)__/g, '<strong>$1</strong>');
 
-    // Italic: *text* or _text_ (single, not inside words)
+    // Italic: *text* or _text_
     text = text.replace(/(\W|^)\*([^*]+)\*(\W|$)/g, '$1<em>$2</em>$3');
     text = text.replace(/(\W|^)_([^_]+)_(\W|$)/g, '$1<em>$2</em>$3');
 
     // Images: ![alt](url)
-    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
+    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
 
     // Links: [text](url)
     text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
