@@ -54,63 +54,43 @@
       <a href="<%= url_for(post.path) %>" class="read-more-link"><%- __('posts.readmore') %></a>
     </div>
     <% } else if (theme.excerpt && theme.excerpt.enable) { %>
-    <% // Auto-generate excerpt: truncate at paragraph or before code blocks
-    var html = post.content;
-    var maxLen = theme.excerpt.length || 300;
-    var truncated = '';
-    var plainText = html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-    var searchPos = 0;
-    var breakPos = -1;
-    var paraCount = 0;
+    <% // Auto-generate excerpt: strip HTML, take plain text up to maxLen
+       var html = post.content;
+       var maxLen = theme.excerpt.length || 300;
+       var truncated = '';
 
-    while (paraCount < 3 && searchPos < html.length) {
-      var nextPara = html.indexOf('</p>', searchPos);
-      if (nextPara === -1) break;
+       // Strip code blocks, figures, and tables entirely before extracting text
+       var cleaned = html
+         .replace(/<pre[^>]*>[\s\S]*?<\/pre>/g, '')
+         .replace(/<figure[^>]*>[\s\S]*?<\/figure>/g, '')
+         .replace(/<table[^>]*>[\s\S]*?<\/table>/g, '');
 
-      // Find the nearest code block or large block element before this paragraph
-      var prePos = html.indexOf('<pre', searchPos);
-      var figurePos = html.indexOf('<figure', searchPos);
-      var tablePos = html.indexOf('<table', searchPos);
-      var nearestBlock = nextPara;
-      if (prePos !== -1 && prePos < nearestBlock) nearestBlock = prePos;
-      if (figurePos !== -1 && figurePos < nearestBlock) nearestBlock = figurePos;
-      if (tablePos !== -1 && tablePos < nearestBlock) nearestBlock = tablePos;
+       // Get plain text
+       var plainText = cleaned
+         .replace(/<[^>]+>/g, '')
+         .replace(/&lt;/g, '<')
+         .replace(/&gt;/g, '>')
+         .replace(/&amp;/g, '&')
+         .replace(/&quot;/g, '"')
+         .replace(/&#39;/g, "'")
+         .replace(/\s+/g, ' ')
+         .trim();
 
-      // If a block element comes before the paragraph, stop there
-      if (nearestBlock < nextPara) {
-        // Check if we have meaningful text before the block
-        var textBeforeBlock = html.substring(searchPos, nearestBlock).replace(/<[^>]+>/g, '').trim();
-        if (textBeforeBlock.length > 10) {
-          breakPos = nearestBlock;
-        }
-        // Skip past this block element for the next iteration
-        searchPos = html.indexOf('>', nearestBlock) + 1;
-        if (searchPos < nearestBlock + 1) searchPos = nearestBlock + 100; // fallback
-        continue;
-      }
-
-      paraCount++;
-      var segmentText = html.substring(searchPos, nextPara).replace(/<[^>]+>/g, '').trim();
-
-      // Stop at 2nd paragraph or when enough text gathered
-      if (paraCount >= 2 || segmentText.length > 60) {
-        breakPos = nextPara + 4;
-        break;
-      }
-      searchPos = nextPara + 4;
-    }
-
-    if (breakPos > 0 && plainText.length > maxLen) {
-      truncated = html.substring(0, breakPos) + '...';
-    } else if (plainText.length > maxLen) {
-      // Fallback: strip HTML and truncate plain text (break at word boundary)
-      var txt = plainText.substring(0, maxLen);
-      var lastSpace = txt.lastIndexOf(' ');
-      if (lastSpace > 0) { txt = txt.substring(0, lastSpace); }
-      truncated = '<p>' + txt + '...</p>';
-    } else {
-      truncated = html;
-    }
+       if (plainText.length > maxLen) {
+         var txt = plainText.substring(0, maxLen);
+         // Try to break at a natural sentence boundary
+         var breaks = ['。', '. ', '！', '？', '\n', ' '];
+         for (var b = 0; b < breaks.length; b++) {
+           var pos = txt.lastIndexOf(breaks[b]);
+           if (pos > maxLen * 0.4) {
+             txt = txt.substring(0, pos);
+             break;
+           }
+         }
+         truncated = '<p>' + txt + '...</p>';
+       } else {
+         truncated = '<p>' + plainText + '</p>';
+       }
     %>
     <%- truncated %>
     <div class="read-more">
