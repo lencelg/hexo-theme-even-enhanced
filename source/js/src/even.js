@@ -480,58 +480,145 @@
     });
   }
 
-  // Fix unordered lists: convert paragraphs with " - " separated items into proper <ul>
-  // Pattern: "prefix - item1 - item2 - item3"
-  // Prefix (before first " - ") becomes a <p>, the rest become <li> items
+  // Fix unordered lists: convert paragraphs with list-like patterns into proper <ul>
+  // Patterns:
+  //   " - item1 - item2 - item3"  (inline hyphens)
+  //   "- item1 - item2 - item3"   (starts with hyphen)
+  //   "* item1 * item2 * item3"   (asterisk markers)
+  //   "• item1 • item2 • item3"   (bullet markers)
   Even.prototype.fixUnorderedLists = function () {
+    var self = this;
     $('.post-content p').each(function () {
       var $p = $(this);
       var html = $p.html();
 
       // Skip if already inside a list or contains block-level elements
       if ($p.parents('li, ol, ul').length) return;
-      if ($p.find('img, table, blockquote, pre, h1, h2, h3, h4, h5, h6').length) return;
+      if ($p.find('img, table, blockquote, pre, h1, h2, h3, h4, h5, h6, ul, ol').length) return;
 
-      // Match items separated by " - " (space-hyphen-space)
-      // The pattern requires at least 2 such separators (3+ items) to qualify as a list
-      var separator = ' - ';
+      // --- Step 1: detect the list marker ---
+      var markerRegex = /(?:^|[\s>;、，])[\-*•·‣⁃]\s/;
+      var matches = html.match(new RegExp(markerRegex.source, 'g'));
+      if (!matches || matches.length < 2) return;
+
+      var marker = matches[0].trim();
+      var sepStr = ' ' + marker + ' ';
+      var firstChar = html.charAt(0);
+      var startsWithMarker = (firstChar === marker);
+
+      // --- Helper: check if position is inside an HTML tag ---
+      var isInsideHtmlTag = function (str, pos) {
+        var before = str.substring(0, pos);
+        var lastLt = before.lastIndexOf('<');
+        var lastGt = before.lastIndexOf('>');
+        // Inside a tag if last '<' is after last '>' (i.e., tag not yet closed)
+        return lastLt > lastGt;
+      };
+
+      // --- Step 2: try to split by main separator ---
       var parts = [];
       var searchStart = 0;
-
-      // Find all " - " occurrences
       while (searchStart < html.length) {
-        var sepIdx = html.indexOf(separator, searchStart);
+        var sepIdx = html.indexOf(sepStr, searchStart);
         if (sepIdx === -1) break;
-        // Make sure it's not inside an HTML tag or entity
-        var beforeSep = html.substring(0, sepIdx);
-        if (beforeSep.lastIndexOf('>') > beforeSep.lastIndexOf('<')) {
+        if (isInsideHtmlTag(html, sepIdx)) {
           searchStart = sepIdx + 1;
           continue;
         }
         parts.push(sepIdx);
-        searchStart = sepIdx + separator.length;
+        searchStart = sepIdx + sepStr.length;
       }
 
-      // Need at least 2 separators (3 items) to form a list
+      // Also try Unicode bullet as separator if no matches with space-hyphen-space
+      if (parts.length < 2) {
+        // Try other common markers
+        var altMarkers = ['\u2022', '\u00B7', '\u2023', '\u2043', '*'];
+        for (var mi = 0; mi < altMarkers.length; mi++) {
+          var altMarker = altMarkers[mi];
+          if (marker === altMarker) continue; // already tried
+          var altSep = ' ' + altMarker + ' ';
+          var altParts = [];
+          var altSearch = 0;
+          while (altSearch < html.length) {
+            var altIdx = html.indexOf(altSep, altSearch);
+            if (altIdx === -1) break;
+            if (isInsideHtmlTag(html, altIdx)) {
+              altSearch = altIdx + 1;
+              continue;
+            }
+            altParts.push(altIdx);
+            altSearch = altIdx + altSep.length;
+          }
+          if (altParts.length >= 2) {
+            marker = altMarker;
+            sepStr = altSep;
+            parts = altParts;
+            startsWithMarker = (firstChar === marker);
+            break;
+          }
+        }
+      }
+
+      // Try to detect if items start with marker at beginning of paragraph
+      // Pattern: "- item1 - item2 - item3" (no leading text)
+      if (parts.length < 2 && startsWithMarker) {
+        // The first marker is at position 0, split by " marker " from position marker.length+1
+        var altSep2 = ' ' + marker + ' ';
+        var altParts2 = [];
+        var altSearch2 = marker.length + 1; // skip past leading "marker "
+        while (altSearch2 < html.length) {
+          var altIdx2 = html.indexOf(altSep2, altSearch2);
+          if (altIdx2 === -1) break;
+          if (isInsideHtmlTag(html, altIdx2)) {
+            altSearch2 = altIdx2 + 1;
+            continue;
+          }
+          altParts2.push(altIdx2);
+          altSearch2 = altIdx2 + altSep2.length;
+        }
+        if (altParts2.length >= 2) {
+          sepStr = altSep2;
+          parts = altParts2;
+        }
+      }
+
       if (parts.length < 2) return;
 
-      // Extract items
+      // --- Step 3: extract items ---
       var items = [];
       var cursor = 0;
+      if (startsWithMarker) {
+        cursor = marker.length + 1; // skip leading "marker "
+      }
       for (var i = 0; i < parts.length; i++) {
         var item = html.substring(cursor, parts[i]).trim();
         if (item) items.push(item);
-        cursor = parts[i] + separator.length;
+        cursor = parts[i] + sepStr.length;
       }
       var lastItem = html.substring(cursor).trim();
       if (lastItem) items.push(lastItem);
 
-      if (items.length < 3) return;
+      if (items.length < 2) return;
 
-      // First item is the leading text, rest are list items
-      var leadingText = items[0];
-      var listItems = items.slice(1);
+      // --- Step 4: separate leading text from list items ---
+      var leadingText = null;
+      var listItems = items;
 
+      if (!startsWithMarker) {
+        leadingText = items[0];
+        listItems = items.slice(1);
+        if (listItems.length < 2) return;
+      } else {
+        // Strip leading marker from first item if present
+        if (listItems.length > 0) {
+          var first = listItems[0];
+          if (first.charAt(0) === marker) {
+            listItems[0] = first.substring(1).trim();
+          }
+        }
+      }
+
+      // --- Step 5: build replacement HTML ---
       var listHtml = '';
       if (leadingText) {
         listHtml += '<p>' + leadingText + '</p>\n';
