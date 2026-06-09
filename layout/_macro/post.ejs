@@ -54,42 +54,61 @@
       <a href="<%= url_for(post.path) %>" class="read-more-link"><%- __('posts.readmore') %></a>
     </div>
     <% } else if (theme.excerpt && theme.excerpt.enable) { %>
-    <% // Auto-generate excerpt: strip HTML, take plain text up to maxLen
+    <% // Auto-generate excerpt: strip code blocks but preserve inline formatting
        var html = post.content;
        var maxLen = theme.excerpt.length || 300;
        var truncated = '';
 
-       // Strip code blocks, figures, and tables entirely before extracting text
+       // Remove code blocks, figures, and tables — they don't belong in excerpts
        var cleaned = html
          .replace(/<pre[^>]*>[\s\S]*?<\/pre>/g, '')
          .replace(/<figure[^>]*>[\s\S]*?<\/figure>/g, '')
          .replace(/<table[^>]*>[\s\S]*?<\/table>/g, '');
 
-       // Get plain text
-       var plainText = cleaned
-         .replace(/<[^>]+>/g, '')
-         .replace(/&lt;/g, '<')
-         .replace(/&gt;/g, '>')
-         .replace(/&amp;/g, '&')
-         .replace(/&quot;/g, '"')
-         .replace(/&#39;/g, "'")
-         .replace(/\s+/g, ' ')
-         .trim();
+       // Calculate plain text length of cleaned HTML
+       var plainLen = cleaned.replace(/<[^>]+>/g, '').replace(/\s+/g, '').length;
 
-       if (plainText.length > maxLen) {
-         var txt = plainText.substring(0, maxLen);
-         // Try to break at a natural sentence boundary
-         var breaks = ['。', '. ', '！', '？', '\n', ' '];
-         for (var b = 0; b < breaks.length; b++) {
-           var pos = txt.lastIndexOf(breaks[b]);
-           if (pos > maxLen * 0.4) {
-             txt = txt.substring(0, pos);
+       if (plainLen <= maxLen) {
+         // Short enough — use as-is
+         truncated = cleaned;
+       } else {
+         // Too long — truncate at paragraph boundaries
+         var parts = cleaned.split(/<\/p>/i);
+         var accumulated = '';
+         var accumulatedLen = 0;
+         var cut = false;
+
+         for (var pi = 0; pi < parts.length; pi++) {
+           var part = parts[pi];
+           if (!part.trim()) continue;
+           var partLen = part.replace(/<[^>]+>/g, '').replace(/\s+/g, '').length;
+           if (accumulatedLen + partLen > maxLen && accumulatedLen > 0) {
+             cut = true;
              break;
            }
+           if (accumulated) accumulated += '</p>';
+           accumulated += part;
+           accumulatedLen += partLen;
          }
-         truncated = '<p>' + txt + '...</p>';
-       } else {
-         truncated = '<p>' + plainText + '</p>';
+
+         if (cut && accumulated) {
+           truncated = accumulated + '</p>...';
+         } else {
+           // Fallback: keep first maxLen chars of plain text, preserving HTML
+           var plain = cleaned.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+           if (plain.length > maxLen) {
+             var txt = plain.substring(0, maxLen);
+             var lastDot = Math.max(txt.lastIndexOf('。'), txt.lastIndexOf('. '));
+             if (lastDot > maxLen * 0.4) txt = txt.substring(0, lastDot);
+             else {
+               var lastSp = txt.lastIndexOf(' ');
+               if (lastSp > maxLen * 0.5) txt = txt.substring(0, lastSp);
+             }
+             truncated = '<p>' + txt + '...</p>';
+           } else {
+             truncated = cleaned;
+           }
+         }
        }
     %>
     <%- truncated %>
