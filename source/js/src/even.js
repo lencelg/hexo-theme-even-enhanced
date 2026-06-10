@@ -493,6 +493,8 @@
     var $paragraphs = $content.find('p');
     if (!$paragraphs.length) return;
 
+    var hasChanges = false;
+
     // Process paragraphs in order, grouping consecutive list items
     var i = 0;
     while (i < $paragraphs.length) {
@@ -508,7 +510,9 @@
       if (headingMatch) {
         var level = headingMatch[1].length;
         var headingText = self._processInline(headingMatch[2]);
-        $p.replaceWith('<h' + level + '>' + headingText + '</h' + level + '>');
+        var headingId = self._slugify(headingText);
+        $p.replaceWith('<h' + level + ' id="' + headingId + '">' + headingText + '</h' + level + '>');
+        hasChanges = true;
         i++;
         continue;
       }
@@ -580,8 +584,91 @@
         }
         ulHtml += '</ul>';
         $firstItem.replaceWith(ulHtml);
+        hasChanges = true;
       }
     }
+
+    // If we created new headings, rebuild the TOC
+    if (hasChanges && self.config.toc) {
+      self._rebuildToc($content);
+    }
+  };
+
+  // Generate a URL-friendly ID from heading text
+  Even.prototype._slugify = function (text) {
+    return text
+      .toLowerCase()
+      .replace(/<[^>]+>/g, '')
+      .replace(/[^\w\u4e00-\u9fff\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      || 'heading';
+  };
+
+  // Rebuild Table of Contents from all headings in post content
+  Even.prototype._rebuildToc = function ($content) {
+    var $toc = $('.post-toc-content');
+    if (!$toc.length) return;
+
+    var headings = [];
+    $content.find('h1, h2, h3, h4, h5, h6').each(function () {
+      var $h = $(this);
+      var text = $h.text().trim();
+      var id = $h.attr('id');
+      var level = parseInt(this.tagName.charAt(1));
+      if (!id) {
+        id = 'heading-' + headings.length;
+        $h.attr('id', id);
+      }
+      if (text) {
+        headings.push({ text: text, id: id, level: level });
+      }
+    });
+
+    if (!headings.length) return;
+
+    // Build nested TOC HTML (respect heading hierarchy)
+    var html = this._buildTocTree(headings, 1);
+    $toc.html(html);
+  };
+
+  // Build nested TOC list from flat heading array
+  Even.prototype._buildTocTree = function (headings, minLevel) {
+    if (!headings.length) return '';
+    var html = '<ol class="toc">\n';
+    var i = 0;
+    while (i < headings.length) {
+      var h = headings[i];
+      if (h.level < minLevel) { i++; continue; }
+      if (h.level > minLevel) {
+        // Collect child headings for deeper nesting
+        var children = [];
+        while (i < headings.length && headings[i].level > minLevel) {
+          children.push(headings[i]);
+          i++;
+        }
+        html += this._buildTocTree(children, minLevel + 1);
+        continue;
+      }
+      html += '<li class="toc-item toc-level-' + h.level + '">\n';
+      html += '<a class="toc-link" href="#' + h.id + '">\n';
+      html += '<span class="toc-text">' + h.text + '</span>\n';
+      html += '</a>\n';
+      i++;
+      // Check for child headings
+      var childItems = [];
+      while (i < headings.length && headings[i].level > h.level) {
+        childItems.push(headings[i]);
+        i++;
+      }
+      if (childItems.length > 0) {
+        html += this._buildTocTree(childItems, h.level + 1);
+      }
+      html += '</li>\n';
+    }
+    html += '</ol>\n';
+    return html;
   };
 
   // Process inline markdown: bold, italic, code, links
