@@ -9,8 +9,6 @@ major difference
 
 ![](./demo/demo.png)
 
-you can also go to [my blog](https://lencelg.github.io/) for a preview
-
 ## Installation
 use `git`
 
